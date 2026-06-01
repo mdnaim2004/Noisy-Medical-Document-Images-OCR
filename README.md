@@ -1,132 +1,231 @@
 # Noisy Medical Document Images OCR
 
-A deep learning project for classifying noisy medical document images using OCR techniques. Built with PyTorch and Flask, this project provides both a Jupyter notebook for model training and a web application for inference.
+This project classifies noisy medical document images into two document types:
 
-## 📋 Overview
+- Medical Bill
+- Discharge Summary
 
-This project tackles the challenge of classifying degraded or noisy medical document images into two categories:
+It contains two parts:
 
-- **Medical Bill** - Hospital/healthcare facility billing documents
-- **Discharge Summary** - Patient discharge summaries and clinical notes
+- A Jupyter notebook for the full training and evaluation pipeline
+- A Flask web application for local inference on uploaded images
 
-The trained ResNet18-based classifier achieves robust performance on noisy, scanned medical documents, making it suitable for document digitization pipelines.
+The project is based on a ResNet18 deep learning model trained to recognize medical document categories even when the images are noisy, blurred, scanned poorly, or affected by shadows and artifacts.
 
-## 🗂️ Project Structure
+## Project Goal
+
+The main goal is to build an end-to-end pipeline that can:
+
+1. Load and inspect the medical document dataset
+2. Preprocess and augment the images
+3. Train a classification model
+4. Evaluate the model on validation data
+5. Save the trained weights
+6. Run a Flask app that predicts the document class from an uploaded image
+
+## What This Project Solves
+
+Medical documents often come from real-world scans or phone photos. Those images are not clean. They can contain:
+
+- Blur
+- Noise
+- Shadows
+- Uneven lighting
+- Skewed orientation
+- Low contrast
+
+This project is designed to handle those conditions and still classify the document into the correct category.
+
+## Repository Structure
 
 ```
 .
-├── README.md                              # This file
-├── noisy-medical-document-images-ocr.ipynb # Training notebook
+├── README.md
+├── noisy-medical-document-images-ocr.ipynb
 └── medical_doc_app/
-    ├── app.py                             # Flask web application
-    ├── model.pth                          # Trained model weights (ResNet18)
-    ├── templates/                         # HTML templates for web UI
-    └── uploads/                           # Temporary directory for uploaded images
+    ├── app.py
+    ├── model.pth
+    ├── templates/
+    │   └── index.html
+    └── uploads/
 ```
 
-## 🔄 Project Flow
+### File Purpose
 
-The project follows a complete ML pipeline from training to deployment:
+- [noisy-medical-document-images-ocr.ipynb](noisy-medical-document-images-ocr.ipynb): training, evaluation, and model export notebook
+- [medical_doc_app/app.py](medical_doc_app/app.py): Flask inference app
+- [medical_doc_app/model.pth](medical_doc_app/model.pth): saved trained model weights
+- [medical_doc_app/templates/index.html](medical_doc_app/templates/index.html): web UI template
+- [medical_doc_app/uploads/](medical_doc_app/uploads/): temporary folder for uploaded files
 
-1. **Data Preparation**: Load and inspect the medical document dataset
-2. **Preprocessing**: Resize, normalize, and augment images for robust training
-3. **Model Training**: Train a ResNet18-based classifier on noisy documents
-4. **Evaluation**: Assess model performance with validation metrics and confusion matrix
-5. **Export**: Save trained weights as `model.pth`
-6. **Deployment**: Serve the model via a Flask web application
+## End-to-End Workflow
 
-## 📓 Training Notebook
+The complete pipeline follows this order:
 
-The main notebook ([noisy-medical-document-images-ocr.ipynb](noisy-medical-document-images-ocr.ipynb)) contains the full end-to-end workflow:
+### 1. Dataset Loading
 
-- Dataset loading and exploration
-- Image preprocessing and augmentation strategies
-- Model architecture and training configuration
-- Validation metrics and confusion matrix visualization
-- Model export and deployment guidance
+The notebook starts by loading the dataset and checking the folder structure. This ensures the class folders and image paths are available before training begins.
 
-## 🚀 Running the Web Application
+### 2. Preprocessing
+
+Each image is resized to 224 × 224 and normalized using ImageNet statistics. This matches the input format expected by ResNet18.
+
+### 3. Model Building
+
+The notebook uses a ResNet18 backbone with a custom classification head for two output classes.
+
+### 4. Training
+
+The model is trained on the medical document images using PyTorch.
+
+### 5. Validation
+
+The notebook evaluates model performance using metrics such as accuracy, precision, recall, F1-score, and a confusion matrix.
+
+### 6. Export
+
+After training, the final weights are saved as `model.pth`.
+
+### 7. Deployment
+
+The Flask app loads `model.pth`, accepts an uploaded image, preprocesses it, and returns a prediction.
+
+## Notebook Walkthrough
+
+Open [noisy-medical-document-images-ocr.ipynb](noisy-medical-document-images-ocr.ipynb) to see the full workflow.
+
+The notebook includes:
+
+- Environment setup
+- Dataset path checking
+- Dataset exploration
+- Image visualization
+- Label distribution analysis
+- Train/validation split
+- Transform and augmentation setup
+- PyTorch dataset and dataloader creation
+- ResNet18 model definition
+- Training loop
+- Validation and metric calculation
+- Confusion matrix plotting
+- Saving the final model
+
+## How the Flask App Works
+
+The app in [medical_doc_app/app.py](medical_doc_app/app.py) performs these steps:
+
+1. Accepts an uploaded image from the browser
+2. Saves the file temporarily inside the `uploads/` folder
+3. Opens the image and converts it to RGB
+4. Applies the same preprocessing used during training
+5. Loads the trained ResNet18 weights from `model.pth`
+6. Runs inference on the image
+7. Displays the predicted class
+
+### Supported Classes
+
+- Medical Bill
+- Discharge Summary
+
+## How to Run the App
 
 ### Prerequisites
 
-- Python 3.7+
-- Flask
+Make sure these are installed:
+
+- Python 3.11 or compatible version
 - PyTorch
 - torchvision
+- Flask
 - Pillow
 
-### Installation
+### Install Dependencies
+
+If needed, install the required packages:
 
 ```bash
 pip install flask torch torchvision pillow
 ```
 
-### Start the Application
+### Run the App
 
-Navigate to the `medical_doc_app/` directory and run:
+Go to the `medical_doc_app/` folder and start the Flask server:
 
 ```bash
 python app.py
 ```
 
-The application will start on:
+The app will usually run at:
 
-```
+```text
 http://127.0.0.1:5000/
 ```
 
-Open this URL in your browser to access the web interface.
+Open that address in your browser.
 
-### Using the Application
+### Important Run Note
 
-1. Click the upload button or drag-and-drop a medical document image
-2. The application preprocesses the image automatically
-3. The trained model generates a prediction (Medical Bill or Discharge Summary)
-4. Results are displayed on the web interface
+The app expects `model.pth` to be available in the same folder as `app.py`. If you retrain the model in the notebook, copy the new weights into `medical_doc_app/` before running the app.
 
-Supported image formats: `.jpg`, `.jpeg`, `.png`, `.gif`
+## How to Use the App
 
-## 🔧 Flask App Details
+1. Open the local web page in your browser.
+2. Upload a medical document image.
+3. Wait for the model to process the image.
+4. Read the predicted class shown on the page.
 
-**File**: [medical_doc_app/app.py](medical_doc_app/app.py)
+The app is meant for single-image inference and local demonstration.
 
-The Flask application:
-- Loads the pre-trained ResNet18 model (`model.pth`)
-- Handles image uploads through a simple web interface
-- Preprocesses images to match training specifications
-- Returns predictions with confidence scores
-- Stores temporary uploads in the `uploads/` folder
+## Model Details
 
-## 📊 Model Architecture
+- Base architecture: ResNet18
+- Output classes: 2
+- Input size: 224 × 224
+- Framework: PyTorch
+- Inference device: CPU
 
-- **Base Model**: ResNet18 (pre-trained on ImageNet)
-- **Output Classes**: 2 (Medical Bill, Discharge Summary)
-- **Input Size**: Images resized to 224×224 pixels
-- **Training Framework**: PyTorch
+The classification head uses a dropout layer followed by a linear layer for binary classification.
 
-## 🎯 Use Cases
+## Dataset and Training Notes
 
-- **Document Digitization**: Automatically classify scanned medical records
-- **Medical Workflow Automation**: Route documents to appropriate processing pipelines
-- **Document Management**: Sort large batches of medical documents efficiently
-- **Healthcare IT**: Integrate into EMR/EHR systems for document classification
+The original Kaggle notebook is based on noisy medical document images. In this project, the training setup is designed to improve robustness by using image preprocessing and augmentation.
 
-## 📚 References
+This helps the model perform better on real document scans where image quality is not ideal.
 
-**Original Kaggle Notebook:**  
+## Best Practices
+
+- Use clear image uploads when possible
+- Avoid heavily cropped document images
+- Keep the document orientation upright
+- If the model file changes, restart the Flask app
+- Run the app from inside `medical_doc_app/` so the relative paths work correctly
+
+## Troubleshooting
+
+### The app does not start
+
+Check whether the required Python packages are installed and whether `model.pth` exists in `medical_doc_app/`.
+
+### The model file cannot be found
+
+Make sure the trained weights are saved at:
+
+`medical_doc_app/model.pth`
+
+### Uploaded image is not predicted correctly
+
+Try using a clearer image, a better scan, or a correctly oriented document photo.
+
+### Browser shows a server error
+
+Check the terminal output where `python app.py` was started. Most Flask errors appear there first.
+
+## Reference
+
+Original Kaggle notebook:
+
 [Noisy Medical Document Images (OCR)](https://www.kaggle.com/code/mdnaimislam165436/noisy-medical-document-images-ocr)
 
-## 💡 Tips for Best Results
+## License
 
-- Use clear, well-lit scans or photos of medical documents
-- For very noisy or severely degraded images, consider additional preprocessing
-- The model performs best with standard document orientations
-- Batch processing can be implemented for high-throughput scenarios
-
-## 📝 License
-
-Please refer to the original Kaggle dataset for licensing information.
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page for ways to contribute.
+Please check the dataset and original Kaggle notebook licensing terms before redistribution or commercial use.
